@@ -2,21 +2,28 @@
 import os
 from tornado import ioloop, web, httpserver
 from tornado import options
-from models import Base
-from tornado.options import define
+from models import Base,engine
+from Handler import IndexHandler
+import redis 
 
+conn = redis.StrictRedis(host='132.232.72.122',port=6379,db=0)
+
+from tornado.options import define, options
 define('port',default=5000, help='web port', type=int)
 define('debug',default=True, help='debug model', type=bool)
 
-# 处理器列表
-handler = []
+
 class EntryModule(web.UIModule):
     def render(self, entry):
         return self.render_string("modules/entry.html", entry=entry)
 
 class Application(web.Application):
-    def __init__(self):
-        handlers = handler
+    def __init__(self, db, redis):
+        self.redis = redis
+        self.db = db
+        handlers =[
+            (r'/', IndexHandler)
+        ]
         settings = dict(
             blog_title=u"sample-bbs",
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
@@ -28,3 +35,12 @@ class Application(web.Application):
             debug=True
         )
         super(Application,self).__init__(handlers,**settings)
+
+if __name__ == '__main__':
+    # 一直呼叫直到redis 应答
+    while not conn.ping():
+        pass
+    app = Application(db=engine, redis=conn)
+    app.listen(port=options.port)
+    server = httpserver.HTTPServer(app)
+    ioloop.IOLoop.instance().start()

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block body%}
+    {% for artice in artices %}
+        {% module Entery(artice) %}
+    {% end %}
+    <div><a href="archive">{{"_Archive"}}</a></div>
+{% end %}
