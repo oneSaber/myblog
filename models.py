@@ -6,7 +6,9 @@ from sqlalchemy import String, Integer, Text, TIME
 from sqlalchemy import ForeignKey
 from datetime import datetime
 
-engine = create_engine("sqlite:///blog.db", echo=True)
+# engine = create_engine("sqlite:///blog.db", echo=True)
+# engine = create_engine("mysql+pymysql://root:123456@132.232.72.122:3306/blog", echo=True)
+engine = create_engine("mysql+pymysql://zsj:123456@39.105.64.7:3306/blog",echo=True)
 Base = declarative_base(bind=engine)
 Session = sessionmaker(bind=engine)
 
@@ -15,9 +17,9 @@ class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     name = Column(String(64), index=True, nullable=False)
-    hashed_passwd = Column(String, nullable=False)
-    slogn = Column(String) # 个人签名
-    avatar = Column(String) # 头像连接
+    hashed_passwd = Column(String(64), nullable=False)
+    slogn = Column(String(64)) # 个人签名
+    avatar = Column(String(64)) # 头像连接
 
     def __init__(self, register_name, passwd, **kwargs):
         self.name = register_name
@@ -32,7 +34,7 @@ class User(Base):
 class Post(Base):
     __tablename__ = 'posts'
     id = Column(Integer, primary_key=True)
-    title = Column(String, index=True, nullable=False)
+    title = Column(String(64), index=True, nullable=False)
     markdown = Column(Text, nullable=False)
     html = Column(Text, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id'))
