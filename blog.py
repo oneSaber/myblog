@@ -4,9 +4,7 @@ from tornado import ioloop, web, httpserver
 from tornado import options
 from models import Base,engine
 from Handler import IndexHandler
-import redis 
-
-conn = redis.StrictRedis(host='132.232.72.122',port=6379,db=0)
+from User import RegisterHandler,LoginHandler
 
 from tornado.options import define, options
 define('port',default=5000, help='web port', type=int)
@@ -18,12 +16,13 @@ class EntryModule(web.UIModule):
         return self.render_string("modules/entry.html", entry=entry)
 
 class Application(web.Application):
-    def __init__(self, db, redis):
-        self.redis = redis
+    def __init__(self, db):    
         self.db = db
         handlers =[
-            (r'/', IndexHandler)
-        ]
+            (r'/', IndexHandler),
+            (r'/register', RegisterHandler),
+            (r'/login', LoginHandler)
+        ] 
         settings = dict(
             blog_title=u"sample-bbs",
             template_path=os.path.join(os.path.dirname(__file__), "templates"),
@@ -38,9 +37,7 @@ class Application(web.Application):
 
 if __name__ == '__main__':
     # 一直呼叫直到redis 应答
-    while not conn.ping():
-        pass
-    app = Application(db=engine, redis=conn)
+    app = Application(db=engine)
     app.listen(port=options.port)
     server = httpserver.HTTPServer(app)
     ioloop.IOLoop.instance().start()

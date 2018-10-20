@@ -18,12 +18,14 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(64), index=True, nullable=False)
     hashed_passwd = Column(String(64), nullable=False)
+    email = Column(String(64), nullable=True)
     slogn = Column(String(64)) # 个人签名
     avatar = Column(String(64)) # 头像连接
 
-    def __init__(self, register_name, passwd, **kwargs):
+    def __init__(self, register_name, passwd, email, **kwargs):
         self.name = register_name
         self.hashed_passwd = passwd
+        self.email = email
         self.slogn = kwargs.get('slogn', None)
         self.avatar = kwargs.get('avatar', None)
     
@@ -79,6 +81,6 @@ class Comment(Base):
 if __name__ == '__main__':
     Base.metadata.create_all()
     session = Session()
-    frist_user = User(register_name='saber',passwd='123456',slogn='hello world')
+    frist_user = User(register_name='saber',passwd='123456',slogn='hello world',email='123@qq.com')
     session.add(frist_user)
     session.commit()
