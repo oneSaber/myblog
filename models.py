@@ -5,6 +5,9 @@ from sqlalchemy import Column, Table
 from sqlalchemy import String, Integer, Text, TIME
 from sqlalchemy import ForeignKey
 from datetime import datetime
+import redis 
+
+conn = redis.StrictRedis(host='132.232.72.122',port=6379,db=0)
 
 # engine = create_engine("sqlite:///blog.db", echo=True)
 # engine = create_engine("mysql+pymysql://root:123456@132.232.72.122:3306/blog", echo=True)
