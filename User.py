@@ -11,13 +11,42 @@ import redis
 
 conn = redis.StrictRedis(host='132.232.72.122',port=6379,db=0)
 
-def LoginRequest(func):
-    def check_login(token):
-        if conn.hget('login', token) is not None:
-            return func()
-        else: 
-            return 403
-    return check_login  
+
+class Token(web.RequestHandler):
+    md5 = hashlib.md5()
+    session = Session()
+    
+    def query_user(self, email):
+        return self.session.query(User).filter_by(email=email).first()
+    
+    # 在redis 中查找令牌,返回一个包含user infomation的dict
+    def check_token(self,token):
+        user = conn.hget('login', token)
+        if user is not None:
+            return json.loads(user)
+        return None
+
+    # user 是一个包含了user information的dict
+    # user = {'id':user.id,'name':user.name,'login_time':datetime.timestamp}
+    def set_token(self, token, user):
+        user['login_time'] = datetime.timestamp(datetime.now())
+        user = json.dumps(user)
+        return conn.hset('login', token, user)
+
+    # user 是一个包含了user info的dict
+    def update_token(self, token, user):
+        user['login_time'] = datetime.timestamp(datetime.now())
+        user = json.dumps(user)
+        return conn.hset('login',token,user)
+
+    def make_token(self, user):
+        return {'id':user.id,
+                'login_name':user.name
+        }   
+
+    def make_cookie(self,email):
+        self.md5.update(email.encode('utf-8'))
+        return self.md5.hexdigest()
 
 class RegisterHandler(web.RequestHandler):
     def get(self):
@@ -51,44 +80,10 @@ class RegisterHandler(web.RequestHandler):
             #抛出异常
             self.write('register failure')
 
-class LoginHandler(web.RequestHandler):
-    md5 = hashlib.md5()
-    session = Session()
+class LoginHandler(Token):
+
     def get(self):
         self.render('login.html')
-
-    def query_user(self, email):
-        return self.session.query(User).filter_by(email=email).first()
-    
-    # 在redis 中查找令牌,返回一个包含user infomation的dict
-    def check_token(self,token):
-        user = conn.hget('login', token)
-        if user is not None:
-            return json.loads(user)
-        return None
-
-    # user 是一个包含了user information的dict
-    # user = {'id':user.id,'name':user.name,'login_time':datetime.timestamp}
-    def set_token(self, token, user):
-        user['login_time'] = datetime.timestamp(datetime.now())
-        user = json.dumps(user)
-        return conn.hset('login', token, user)
-
-    # user 是一个包含了user info的dict
-    def update_token(self, token, user):
-        user['login_time'] = datetime.timestamp(datetime.now())
-        user = json.dumps(user)
-        return conn.hset('login',token,user)
-
-    def make_token(self, user):
-        return {'id':user.id,
-                'login_name':user.name
-        }   
-
-    def make_cookie(self,email):
-        self.md5.update(email.encode('utf-8'))
-        return self.md5.hexdigest()
-
     def post(self):
         # body = self.request.body
         # login_data = json.loads(body)
@@ -123,3 +118,22 @@ class LoginHandler(web.RequestHandler):
             self.set_token(login_user.email,self.make_token(login_user))
             return self.write({'message':'login successful'})
         return self.write({'message':'password wrong'})
+
+# 删除用户
+class DeleteUserHanlder(Token):
+    def post(self):
+        email = self.get_argument('email')
+        passowrd = self.get_argument('password')
+        self.md5.update(passowrd)
+        user = self.query_user(email)
+        # 密码正确，可以删除
+        if user.hashed_passwd == self.md5.hexdigest():
+            # 从数据库中删除
+            self.session.delete(user)
+            try:
+                self.session.commit()
+                if conn.hdel('login',email):
+                    return self.write({'msg':'delete successful'})
+            except:
+                self.session.rollback()
+                return self.write({'msg':'delete failure'})

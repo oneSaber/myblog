@@ -5,6 +5,7 @@ from tornado import options
 from models import Base,engine
 from Handler import IndexHandler
 from User import RegisterHandler,LoginHandler
+from Post import UploadHandler
 
 from tornado.options import define, options
 define('port',default=5000, help='web port', type=int)
@@ -21,7 +22,8 @@ class Application(web.Application):
         handlers =[
             (r'/', IndexHandler),
             (r'/register', RegisterHandler),
-            (r'/login', LoginHandler)
+            (r'/login', LoginHandler),
+            (r'/uploadentry',UploadHandler)
         ] 
         settings = dict(
             blog_title=u"sample-bbs",
