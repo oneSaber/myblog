@@ -81,9 +81,21 @@ class Comment(Base):
         self.markdown = markdown
         self.timestamp = datetime.now()
 
+class WriteTest(Base):
+    key = Column(Integer)
+    value = Column(Integer)
+    def __init__(self,key,value):
+        self.key = key
+        self.value = value
 if __name__ == '__main__':
     Base.metadata.create_all()
-    session = Session()
-    frist_user = User(register_name='saber',passwd='123456',slogn='hello world',email='123@qq.com')
-    session.add(frist_user)
+    session = Session() 
+    begin_time = datetime.now()
+    # frist_user = User(register_name='saber',passwd='123456',slogn='hello world',email='123@qq.com')
+    for i in range(1000):
+        test = WriteTest(key=i,value=i)
+        session.add(test)
     session.commit()
+    end_time = datetime.now()
+    delta_time = (end_time-begin_time).seconds
+    print('total use time {} seconds'.format(delta_time))
