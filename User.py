@@ -75,6 +75,7 @@ class RegisterHandler(web.RequestHandler):
         try:
             session.commit()
             self.write('register successful')
+            self.redirect('/login')
         except:
             session.rollback()
             #抛出异常
@@ -97,6 +98,7 @@ class LoginHandler(Token):
         if login_name is None or password is None or email is None:
             self.set_status(403)
             self.write({'message':'data missing'})
+        
         self.md5.update(password.encode('utf-8'))
         hash_passwd = self.md5.hexdigest()
         
@@ -114,10 +116,13 @@ class LoginHandler(Token):
             self.write({'message':'no user'}) 
             return 
         elif login_user.hashed_passwd == hash_passwd:
-            self.set_cookie('email',self.make_cookie(email))
-            self.set_token(login_user.email,self.make_token(login_user))
-            return self.write({'message':'login successful'})
-        return self.write({'message':'password wrong'})
+            hash_email = self.make_cookie(email)
+            self.set_cookie('email',hash_email)
+            self.set_token(hash_email,self.make_token(login_user))
+            print('login successful')
+            self.redirect('uploadentry')
+            return 
+        self.write({'message':'password wrong'})
 
 # 删除用户
 class DeleteUserHanlder(Token):
@@ -131,9 +136,25 @@ class DeleteUserHanlder(Token):
             # 从数据库中删除
             self.session.delete(user)
             try:
+                md5 = hashlib.md5()
+                md5.update(email)
                 self.session.commit()
-                if conn.hdel('login',email):
+                if conn.hdel('login',md5.hexdigest()):
                     return self.write({'msg':'delete successful'})
             except:
                 self.session.rollback()
                 return self.write({'msg':'delete failure'})
+
+# 点赞
+class StarEntryHandler(Token):
+    # 当用户点赞的时，向redis中set HadStar 添加该文章id zadd
+    # 同时向redis使redis hash entryStar post star 加1 hincrby entrystar {entry_id} 1
+    def get(self):
+        email = self.get_cookie('email')
+        user = self.check_token(email)
+        entry_id = self.get_argument('entry_id')
+        # session = Session()
+        # entry = session.query(Post).filter_by(id=entry_id).first()
+        if user is not None:
+            conn.sadd(str(user['id'])+'stared',entry_id)
+            conn.hincrby('EntryStar',entry_id, 1)

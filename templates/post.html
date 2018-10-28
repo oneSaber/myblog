@@ -1,0 +1,18 @@
+ <html>
+    <head>
+        <title>Upload File</title
+    ></head>
+    <body>
+        <p>Upload entry</p>
+        <form action='/uploadentry'  method='post'>
+            <p>Title<br><input type='text' name='title'/><br/>
+            <p>Entry<br><input type='text' name='entry'/>
+            <input type="submit", value="submit"/>
+        </form>
+        <p>Upload file</p>
+        <form action='/uploadentry' enctype="multipart/form-data" method='post'>
+            <input type='file' name='file'/><br/>
+            <input type='submit' value='submit'/>
+            </form>
+    </body>
+</html>

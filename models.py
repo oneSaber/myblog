@@ -41,16 +41,16 @@ class Post(Base):
     id = Column(Integer, primary_key=True)
     title = Column(String(64), index=True, nullable=False)
     markdown = Column(Text, nullable=False)
-    html = Column(Text, nullable=False)
+    # html = Column(Text, nullable=False)
     author_id = Column(Integer, ForeignKey('users.id'))
     timestamp = Column(TIME)
 
     user = relationship("User", backref='posts')
     
-    def __init__(self, title, author_id, html, markdown):
+    def __init__(self, title, author_id, markdown):
         self.title = title
         self.author_id = author_id,
-        self.html = html
+        # self.html = html
         self.markdown = markdown
         self.timestamp = datetime.now()
     
